@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { AutonomousLoopStudio } from './components/AutonomousLoopStudio'
 import { DOMAIN_COPY, STAGES } from './data/catalog'
 import { DiscoveryProvider, useClockLabel, useDiscovery } from './engine/store'
 import type { Campaign, Domain, GraphNode, Hardware, Stage } from './types'
 
-type ViewTab = 'dashboard' | 'hardware' | 'analytics' | 'ledger'
+type ViewTab = 'autonomous' | 'dashboard' | 'hardware' | 'analytics' | 'ledger'
 
 export default function App() {
   return (
@@ -16,7 +17,7 @@ export default function App() {
 function Shell() {
   const { state, selected, dispatch } = useDiscovery()
   const clock = useClockLabel()
-  const [activeTab, setActiveTab] = useState<ViewTab>('dashboard')
+  const [activeTab, setActiveTab] = useState<ViewTab>('autonomous')
   const [showNewCampModal, setShowNewCampModal] = useState(false)
   const [showNewHypModal, setShowNewHypModal] = useState(false)
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
@@ -34,8 +35,8 @@ function Shell() {
           </div>
         </div>
         <p className="claim">
-          Hypothesis → physical experiment → knowledge. Humans sign the high-stakes
-          gates. Provenance is the product.
+          Hypothesis → physical experiment → knowledge. Real statistical reasoning,
+          Bayesian updates &amp; autonomous next experiment recommendations.
         </p>
         <div className="mast-meta">
           <span className="pill">{clock}</span>
@@ -76,6 +77,12 @@ function Shell() {
 
       <div className="view-switcher">
         <button
+          className={activeTab === 'autonomous' ? 'tab on highlight' : 'tab'}
+          onClick={() => setActiveTab('autonomous')}
+        >
+          ⚡ Autonomous Loop (Real Engine)
+        </button>
+        <button
           className={activeTab === 'dashboard' ? 'tab on' : 'tab'}
           onClick={() => setActiveTab('dashboard')}
         >
@@ -101,65 +108,73 @@ function Shell() {
         </button>
       </div>
 
-      <section className="hero">
-        <LoopRing stage={selected.stage} waiting={selected.waitingApproval} />
-        <div className="brief">
-          <p className="kicker">Open scientific question</p>
-          <h1>{selected.question}</h1>
-          <dl className="facts">
-            <div>
-              <dt>Owner</dt>
-              <dd>{selected.owner}</dd>
-            </div>
-            <div>
-              <dt>Site</dt>
-              <dd>{DOMAIN_COPY[selected.domain]?.site ?? 'Autonomous Site'}</dd>
-            </div>
-            <div>
-              <dt>Cycle</dt>
-              <dd>{selected.cycle}</dd>
-            </div>
-            <div>
-              <dt>Calibration</dt>
-              <dd>{selected.metrics.modelCalibration}%</dd>
-            </div>
-          </dl>
-          <div className="actions">
-            <button
-              className="btn primary"
-              onClick={() => dispatch({ type: 'toggle-run' })}
-              disabled={selected.waitingApproval}
-            >
-              {selected.running ? 'Pause loop' : 'Run loop'}
-            </button>
-            <button className="btn" onClick={() => dispatch({ type: 'toggle-auto' })}>
-              Auto-clear low risk: {selected.autoApproveLow ? 'on' : 'off'}
-            </button>
-            <button className="btn" onClick={() => setShowNewHypModal(true)}>
-              + Propose Hypothesis
-            </button>
-          </div>
-          <div className="meters">
-            <Meter label="Knowledge gain" value={selected.metrics.knowledgeGain} />
-            <Meter label="Model vs. reality" value={selected.metrics.modelCalibration} />
-            <Meter
-              label="Cycles closed"
-              value={Math.min(99, selected.metrics.cyclesClosed * 8)}
-              display={String(selected.metrics.cyclesClosed)}
-            />
-          </div>
-        </div>
-      </section>
+      {activeTab === 'autonomous' && (
+        <section className="view-container">
+          <AutonomousLoopStudio />
+        </section>
+      )}
 
       {activeTab === 'dashboard' && (
-        <section className="grid">
-          <HypothesisBoard campaign={selected} onSelectHypothesis={(id) => dispatch({ type: 'select-hypothesis', hypothesisId: id })} />
-          <ExperimentPanel campaign={selected} />
-          <ApprovalPanel campaign={selected} />
-          <KnowledgePanel campaign={selected} onSelectNode={(node) => setSelectedNode(node)} />
-          <ProvenancePanel campaign={selected} />
-          <WhyPanel />
-        </section>
+        <>
+          <section className="hero">
+            <LoopRing stage={selected.stage} waiting={selected.waitingApproval} />
+            <div className="brief">
+              <p className="kicker">Open scientific question</p>
+              <h1>{selected.question}</h1>
+              <dl className="facts">
+                <div>
+                  <dt>Owner</dt>
+                  <dd>{selected.owner}</dd>
+                </div>
+                <div>
+                  <dt>Site</dt>
+                  <dd>{DOMAIN_COPY[selected.domain]?.site ?? 'Autonomous Site'}</dd>
+                </div>
+                <div>
+                  <dt>Cycle</dt>
+                  <dd>{selected.cycle}</dd>
+                </div>
+                <div>
+                  <dt>Calibration</dt>
+                  <dd>{selected.metrics.modelCalibration}%</dd>
+                </div>
+              </dl>
+              <div className="actions">
+                <button
+                  className="btn primary"
+                  onClick={() => dispatch({ type: 'toggle-run' })}
+                  disabled={selected.waitingApproval}
+                >
+                  {selected.running ? 'Pause loop' : 'Run loop'}
+                </button>
+                <button className="btn" onClick={() => dispatch({ type: 'toggle-auto' })}>
+                  Auto-clear low risk: {selected.autoApproveLow ? 'on' : 'off'}
+                </button>
+                <button className="btn" onClick={() => setShowNewHypModal(true)}>
+                  + Propose Hypothesis
+                </button>
+              </div>
+              <div className="meters">
+                <Meter label="Knowledge gain" value={selected.metrics.knowledgeGain} />
+                <Meter label="Model vs. reality" value={selected.metrics.modelCalibration} />
+                <Meter
+                  label="Cycles closed"
+                  value={Math.min(99, selected.metrics.cyclesClosed * 8)}
+                  display={String(selected.metrics.cyclesClosed)}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="grid">
+            <HypothesisBoard campaign={selected} onSelectHypothesis={(id) => dispatch({ type: 'select-hypothesis', hypothesisId: id })} />
+            <ExperimentPanel campaign={selected} />
+            <ApprovalPanel campaign={selected} />
+            <KnowledgePanel campaign={selected} onSelectNode={(node) => setSelectedNode(node)} />
+            <ProvenancePanel campaign={selected} />
+            <WhyPanel />
+          </section>
+        </>
       )}
 
       {activeTab === 'hardware' && <HardwareView campaign={selected} />}
